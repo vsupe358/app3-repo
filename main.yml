@@ -1,0 +1,35 @@
+name: CI/CD Workflow
+
+on:
+  push:
+    branches:
+      - dev
+      - demo
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build and test application
+        run: npm run build && npm run test
+
+      - name: Deploy application
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_KEY }}
+          aws configure set region <your_aws_region>
+          aws s3 sync dist/ s3://<your_s3_bucket> --delete
+          aws cloudfront create-invalidation --distribution-id <your_cloudfront_distribution_id> --paths "/*"
